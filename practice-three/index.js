@@ -1,0 +1,93 @@
+import {
+    select,
+    csv,
+    scaleLinear,
+    max,
+    scaleBand,
+    axisLeft,
+    axisBottom,
+    format
+} from 'd3';
+
+
+//LINK: https://www.youtube.com/watch?v=_8V5o2UHG0E
+//TODO: stopped video at 4:04:22
+
+const svg = select('svg');
+
+const width = +svg.attr('width');
+const height = +svg.attr('height');
+
+const render = data => {
+    const xValue = d => d.population_2020;
+    console.log(xValue);
+    const yValue = d => d.country;
+    const margin = { top: 40, right: 50, bottom: 85, left: 250 };
+    //determine the inner width by subtracting the svgWidth and the applicable margins
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    //   use max to determine largest value
+    const xScale = scaleLinear()
+        .domain([0, max(data, xValue)])
+        .range([0, innerWidth]);
+
+    const yScale = scaleBand()
+        .domain(data.map(d => yValue(d)))
+        .range([0, innerHeight])
+        .padding(0.1);
+
+    //group element
+    const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    //removes unwanted 'G's with 'B's
+    const xAxisTickFormat = number =>
+        format(".3s")(number)
+            .replace('G', 'B');
+
+
+    const xAxis = axisBottom(xScale)
+        .tickFormat(xAxisTickFormat)
+        .tickSize(-innerHeight);
+    //.tickSize ajusted the height of the ticks
+
+    //formating y or x axes information can only be adjusted using the axis<area>() methods
+    //.tickFormat use http://bl.ocks.org/zanarmstrong/05c1e95bf7aa16c4768e for help
+    g.append('g')
+        .call(axisLeft(yScale))
+        .selectAll('.domain, .tick line')
+        .remove();
+
+    //.selectAll is the D3 selector which selects classes .domain and .tick with any lines, works the same as css
+    //line is actual line...
+    const xAxisG = g.append('g').call(xAxis)
+        .attr('transform', `translate(0,${innerHeight})`);
+
+    xAxisG.select('.domain').remove();
+
+    xAxisG.append('text')
+        .attr('y', 65)
+        .attr('x', innerWidth / 2)
+        .attr('fill', 'black')
+        .text('Population');
+
+    g.selectAll('rect').data(data)
+        .enter().append('rect')
+        .attr('y', d => yScale(yValue(d)))
+        .attr('width', d => xScale(xValue(d)))
+        .attr('height', yScale.bandwidth());
+
+    //can set positioning using variables such as x, y, z
+    g.append('text')
+        .attr('y', -10)
+        .text('Top 10 most populous countries');
+};
+
+//calls the rendering
+csv('data.csv').then(data => {
+    data.forEach(d => {
+        d.population_2020 = +d.population_2020 * 1000
+    });
+    render(data);
+});
