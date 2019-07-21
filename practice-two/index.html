@@ -23,10 +23,11 @@
             var myChart = new dimple.chart(svg, data);
 
             var x = myChart.addCategoryAxis("x", "Data Id");
-            myChart.addMeasureAxis("y", "Data One");
+            var y = myChart.addMeasureAxis("y", "Data One");
+            
             myChart.addSeries(null, dimple.plot.bar);
             myChart.draw();
-
+            console.log(myChart);
         </script>
     </body>
 </html>
